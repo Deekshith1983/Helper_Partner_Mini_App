@@ -1,0 +1,15 @@
+// Example Firebase configuration template.
+// Copy this file to `lib/firebase_options.dart` and populate with your Firebase project credentials.
+import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+
+class DefaultFirebaseOptions {
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyFakeApiKeyPlaceholderForDemoOnly_abc',
+    appId: '1:123456789012:android:abcdef0123456789',
+    messagingSenderId: '123456789012',
+    projectId: 'ezyhelpers-partner-demo',
+    storageBucket: 'ezyhelpers-partner-demo.appspot.com',
+  );
+
+  static FirebaseOptions get currentPlatform => android;
+}

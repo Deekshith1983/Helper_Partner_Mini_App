@@ -102,11 +102,8 @@ class AuthProvider extends ChangeNotifier {
       _status = AuthStatus.authenticated;
       _isLoading = false;
 
-      // Log login success analytics event
-      await _analyticsService.logLoginSuccess(
-        username: result.user.username,
-        userId: result.user.id,
-      );
+      // Log login success analytics event (zero PII)
+      await _analyticsService.logLoginSuccess();
 
       notifyListeners();
       return true;

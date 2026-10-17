@@ -46,3 +46,9 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Firebase Secrets
+/android/app/google-services.json
+!/android/app/google-services.json.example
+/lib/firebase_options.dart
+!/lib/firebase_options.dart.example

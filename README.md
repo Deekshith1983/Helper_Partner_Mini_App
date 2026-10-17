@@ -108,6 +108,24 @@ flutter build apk --debug
 
 ---
 
+## Firebase Analytics & DebugView
+
+The application logs three core lifecycle events (with zero PII):
+1. `login_success` (`{"method": "password"}`)
+2. `job_viewed` (`{"job_id": <int>, "status": <string>}`)
+3. `job_status_updated` (`{"job_id": <int>, "from_status": <string>, "to_status": <string>}`)
+
+### Configuring Your Firebase Project
+1. Create a Firebase project in the [Firebase Console](https://console.firebase.google.com/).
+2. Add an Android app with package name: `com.ezyhelpers.helper_partner`.
+3. Download `google-services.json` and place it at:
+   `mobile/android/app/google-services.json`
+   *(An example template is provided at [`mobile/android/app/google-services.json.example`](mobile/android/app/google-services.json.example). Real credential files are git-ignored to prevent accidental leaks).*
+4. Enable near-real-time event streaming in Firebase DebugView:
+   See full instructions in [docs/FIREBASE_DEBUGVIEW.md](docs/FIREBASE_DEBUGVIEW.md).
+
+---
+
 ## API Ownership & Security Policy
 - **Ownership Rule**: Every helper can ONLY access jobs assigned to their user account (`helper=request.user`).
 - **404 Behavior**: If an authenticated helper attempts to access (`GET`) or mutate (`PATCH`) a job ID that belongs to another helper (or does not exist), the API returns **`404 Not Found`** with `{"detail": "Job not found."}`.

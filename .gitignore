@@ -57,6 +57,9 @@ htmlcov/
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 **/android/app/google-services.json
+!**/android/app/google-services.json.example
+**/lib/firebase_options.dart
+!**/lib/firebase_options.dart.example
 *.keystore
 *.jks
 
