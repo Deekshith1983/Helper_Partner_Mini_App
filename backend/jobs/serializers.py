@@ -72,6 +72,20 @@ class JobSerializer(serializers.ModelSerializer):
 class JobStatusUpdateSerializer(serializers.Serializer):
     """
     Validates incoming status update payload.
-    Stage 1 accepts any valid choice from JobStatus.
+    Ensures 'status' is provided and is a valid choice among JobStatus.
     """
-    status = serializers.ChoiceField(choices=JobStatus.choices)
+    status = serializers.CharField(
+        required=True,
+        error_messages={
+            'required': "Field 'status' is required.",
+            'blank': "Field 'status' cannot be blank.",
+        },
+    )
+
+    def validate_status(self, value):
+        valid_statuses = [choice[0] for choice in JobStatus.choices]
+        if value not in valid_statuses:
+            raise serializers.ValidationError(
+                f"Invalid status '{value}'. Valid statuses are: {', '.join(valid_statuses)}."
+            )
+        return value

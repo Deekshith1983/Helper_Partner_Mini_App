@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -6,7 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Job
+from .models import ALLOWED_TRANSITIONS, Job
 from .serializers import (
     JobSerializer,
     JobStatusUpdateSerializer,
@@ -89,26 +90,55 @@ class JobStatusUpdateView(APIView):
     PATCH /api/jobs/<int:pk>/status/
     Updates the lifecycle status of an assigned job.
     Enforces helper ownership (404 if not found or belongs to another helper).
-    Stage 1 accepts any valid JobStatus value.
+    Enforces strict state transitions:
+      ASSIGNED -> IN_PROGRESS
+      IN_PROGRESS -> COMPLETED
+    Only the status field is updated. Concurrency safe via transaction.atomic & select_for_update.
     """
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):
-        try:
-            job = Job.objects.get(pk=pk, helper=request.user)
-        except Job.DoesNotExist:
-            raise NotFound(detail="Job not found.")
+        with transaction.atomic():
+            try:
+                # Concurrency-safe lookup scoped to authenticated helper
+                job = Job.objects.select_for_update().get(pk=pk, helper=request.user)
+            except Job.DoesNotExist:
+                raise NotFound(detail="Job not found.")
 
-        serializer = JobStatusUpdateSerializer(data=request.data)
-        if not serializer.is_valid():
-            # Format validation error cleanly as detail
-            first_key = next(iter(serializer.errors))
-            first_val = serializer.errors[first_key]
-            err_msg = first_val[0] if isinstance(first_val, list) else str(first_val)
-            return Response({'detail': f"{first_key}: {err_msg}"}, status=status.HTTP_400_BAD_REQUEST)
+            serializer = JobStatusUpdateSerializer(data=request.data)
+            if not serializer.is_valid():
+                first_key = next(iter(serializer.errors))
+                first_val = serializer.errors[first_key]
+                err_msg = first_val[0] if isinstance(first_val, list) else str(first_val)
+                return Response({'detail': err_msg}, status=status.HTTP_400_BAD_REQUEST)
 
-        new_status = serializer.validated_data['status']
-        job.status = new_status
-        job.save()
+            new_status = serializer.validated_data['status']
+            current_status = job.status
 
-        return Response(JobSerializer(job).data, status=status.HTTP_200_OK)
+            # Disallow redundant / same-status transitions
+            if current_status == new_status:
+                return Response(
+                    {'detail': f"Job is already in status '{current_status}'. Status transition is not allowed."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Strict state machine transition validation
+            allowed = ALLOWED_TRANSITIONS.get(current_status, [])
+            if new_status not in allowed:
+                allowed_str = ', '.join(allowed) if allowed else 'None (job is final)'
+                return Response(
+                    {
+                        'detail': (
+                            f"Invalid status transition from '{current_status}' to '{new_status}'. "
+                            f"Allowed transitions from '{current_status}': [{allowed_str}]."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Only status field is updated and persisted
+            job.status = new_status
+            job.save(update_fields=['status'])
+
+            return Response(JobSerializer(job).data, status=status.HTTP_200_OK)
+

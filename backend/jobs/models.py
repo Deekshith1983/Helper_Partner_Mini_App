@@ -9,6 +9,14 @@ class JobStatus(models.TextChoices):
     COMPLETED = 'COMPLETED', 'Completed'
 
 
+# Strict state machine: allowed transitions between job lifecycle statuses
+ALLOWED_TRANSITIONS = {
+    JobStatus.ASSIGNED: [JobStatus.IN_PROGRESS],
+    JobStatus.IN_PROGRESS: [JobStatus.COMPLETED],
+    JobStatus.COMPLETED: [],
+}
+
+
 class Job(models.Model):
     """
     Represents a service job assigned to a specific helper.
