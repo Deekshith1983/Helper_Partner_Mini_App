@@ -62,7 +62,54 @@ python manage.py runserver 0.0.0.0:8000
 
 ---
 
+## Mobile (Flutter Android) Setup & Instructions
+
+### 1. Prerequisites
+- Flutter SDK (installed at `C:\src\flutter\bin`, added to `PATH`)
+- Android SDK & Android Emulator (or physical Android phone with USB Debugging enabled)
+
+### 2. Install Flutter Dependencies
+```bash
+cd mobile
+flutter pub get
+```
+
+### 3. Run Static Analysis & Tests
+```bash
+flutter analyze
+flutter test
+```
+
+### 4. Running the App
+
+#### A. Running on Android Emulator (Default)
+The app defaults to `http://10.0.2.2:8000` which maps to your host machine's localhost inside the Android emulator:
+```bash
+flutter run
+```
+
+#### B. Running on a Physical Android Phone
+1. Connect your PC and Android phone to the same Wi-Fi / local network.
+2. Find your PC's local IP address (e.g., `192.168.1.45` via `ipconfig`).
+3. Ensure the Django dev server is listening on all interfaces:
+   ```bash
+   python manage.py runserver 0.0.0.0:8000
+   ```
+4. Run Flutter with `--dart-define=API_BASE_URL`:
+   ```bash
+   flutter run --dart-define=API_BASE_URL=http://192.168.1.45:8000
+   ```
+
+#### C. Build Debug APK
+```bash
+flutter build apk --debug
+# APK output: mobile/build/app/outputs/flutter-apk/app-debug.apk
+```
+
+---
+
 ## API Ownership & Security Policy
 - **Ownership Rule**: Every helper can ONLY access jobs assigned to their user account (`helper=request.user`).
 - **404 Behavior**: If an authenticated helper attempts to access (`GET`) or mutate (`PATCH`) a job ID that belongs to another helper (or does not exist), the API returns **`404 Not Found`** with `{"detail": "Job not found."}`.
 - **Rationale**: Returning 404 rather than 403 prevents attackers or other helpers from enumerating job IDs or discovering the existence and activity of other helpers on the platform.
+

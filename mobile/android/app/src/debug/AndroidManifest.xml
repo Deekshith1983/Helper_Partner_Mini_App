@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The INTERNET permission is required for development. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Allow cleartext HTTP connections to local dev backend during debug builds only -->
+    <application
+        android:usesCleartextTraffic="true" />
+</manifest>
